@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require('validator')
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const Task = require("./task");
 const {sendAccDeactEmail} = require("../emails/account");
@@ -39,6 +40,14 @@ const userSchema = new mongoose.Schema({
       }
     }
   },
+  resetPassToken: {
+    type: String,
+    required: false
+  },
+  resetPasswordExpires: {
+    type: String,
+    required: false
+  },
   tokens: [
     {
       token: {
@@ -60,6 +69,8 @@ userSchema.methods.toJSON = function() {
 
   delete userObject.password;
   delete userObject.tokens;
+  delete userObject.resetPassToken;
+  delete userObject.resetPasswordExpires;
 
   return userObject;
 }
@@ -68,8 +79,22 @@ userSchema.methods.generateAuthToken = async function() {
   const user = this
   const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET)
   user.tokens = user.tokens.concat({token});
-  user.save();
+  await user.save();
   return token;
+}
+
+userSchema.methods.genResetPassToken = async function() {
+  const user = this
+  user.resetPassToken =  crypto.randomBytes(20).toString('hex');
+  user.resetPasswordExpires = Date.now() + 3600000; //expires in an hour
+}
+
+userSchema.methods.resetPassword = async function(password) {
+  const user = this
+  user.resetPassToken = undefined;
+  user.resetPasswordExpires = undefined;
+  user.password = password;
+  await user.save();
 }
 
 userSchema.statics.findByCredentials = async (email, password) => {
@@ -77,8 +102,7 @@ userSchema.statics.findByCredentials = async (email, password) => {
   if(!user) {
     throw new Error('Unable to login');
   }
-  const isMatch = bcrypt.compare(password, user.password);
-
+  const isMatch = await bcrypt.compare(password, user.password);
   if(!isMatch) {
     throw new Error('unable to login');
   }

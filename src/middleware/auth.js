@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../model/user");
+const {common} = require("../common");
 
 const auth = async (req, res, next) => {
     try {
@@ -8,7 +9,7 @@ const auth = async (req, res, next) => {
         const user = await User.findOne({_id: decoded._id, 'tokens.token': token})
 
         if(!user) {
-            throw new Error('Authentication failed');
+            common.error(res, 'Authentication failed');
         }
 
         req.token = token;
@@ -16,7 +17,7 @@ const auth = async (req, res, next) => {
         next();
 
     } catch(e) {
-        res.status(401).send({error: 'Please Authenticate. '})
+        common.error(res, 'Please Authenticate');
     }
 }
 

@@ -16,7 +16,16 @@ const sendAccDeactEmail = (email, name) => sgMail.send({
     text: `Hi ${name}, Your account has deactivated.`
 });
 
+const sendResetTokenEmail = (name, email, resetToken, hostName) => sgMail.send({
+    to: email,
+    from: 'indflor.nasik@gmail.com',
+    subject: 'Reset your password',
+    text: `Hi ${name}, click on the link
+           http://${hostName}/#/reset-password/${resetToken}`
+});
+
 module.exports = {
     sendWelcomeEmail,
-    sendAccDeactEmail
+    sendAccDeactEmail,
+    sendResetTokenEmail
 }
