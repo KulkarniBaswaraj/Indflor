@@ -7,10 +7,15 @@ const { common } = require("../common");
 
 
 router.post('/registerUser', async (req, res) => {
-   const user = new User(req.body);
    try {
+      const oldUser = await User.findOne({ email: req.body.email });
+      if(oldUser) {
+         return common.error(res, 'Email is already registered.');
+      }
+      const user = new User(req.body);
       await user.save();
       const token = await user.generateAuthToken();
+      sendWelcomeEmail(user.email, user.name);
       common.success(res, { user, token });
    } catch (e) {
       common.fail(res, e);

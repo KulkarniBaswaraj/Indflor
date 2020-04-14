@@ -13,7 +13,7 @@ const common = {
         });
     },
     error(res, err) {
-        res.status(400).send({
+        res.status(400).json({
             status: 0,
             error: err
         })
