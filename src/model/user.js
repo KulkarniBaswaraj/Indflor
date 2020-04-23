@@ -40,6 +40,22 @@ const userSchema = new mongoose.Schema({
       }
     }
   },
+  dob: {
+    type: Date,
+    required: false,
+  },
+  phone: {
+    type: String,
+    required: false
+  },
+  city: {
+    type: String,
+    required: false
+  },
+  pin: {
+    type: String,
+    required: false
+  },
   resetPassToken: {
     type: String,
     required: false
@@ -66,7 +82,6 @@ userSchema.virtual('tasks', {
 userSchema.methods.toJSON = function() {
   const user = this
   const userObject = user.toObject();
-
   delete userObject.password;
   delete userObject.tokens;
   delete userObject.resetPassToken;

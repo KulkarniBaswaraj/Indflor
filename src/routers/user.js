@@ -112,7 +112,7 @@ router.patch('/users/me', auth, async (req, res) => {
          req.user[key] = req.body[key];
       });
       await req.user.save();
-      res.send(req.user);
+      common.success(res, req.user)
    } catch (e) {
       common.fail(res, e);
    }
