@@ -9,14 +9,14 @@ const { common } = require("../common");
 router.post('/registerUser', async (req, res) => {
    try {
       const oldUser = await User.findOne({ email: req.body.email });
-      if(oldUser) {
+      if (oldUser) {
          return common.error(res, 'Email is already registered.');
       }
       const user = new User(req.body);
       await user.save();
       const token = await user.generateAuthToken();
       sendWelcomeEmail(user.email, user.name);
-      common.success(res, { user, token });
+      common.success(res, {result:{ user, token }} );
    } catch (e) {
       common.fail(res, e);
    }
@@ -26,7 +26,7 @@ router.post('/user/login', async (req, res) => {
    try {
       const user = await User.findByCredentials(req.body.email, req.body.password);
       const token = await user.generateAuthToken();
-      common.success(res, { user, token });
+      common.success(res, {result:{ user, token }});
    } catch (e) {
       common.fail(res, e);
    }
@@ -67,11 +67,42 @@ router.post('/users/reset-password', async (req, res) => {
    }
 });
 
+router.post('/usersList', auth, async(req, res) => {
+   const filter = req.body.filter;
+   const index = parseInt(req.body.page.index);
+   const size = parseInt(req.body.page.size);
+   try {
+      const total = await User.find(filter);
+      const users = await User.find({}).skip((index * size)).limit(size);
+      common.success(res, {
+         result: users,
+         page: {
+            total: total.length,
+            index: index
+         }
+      });
+   } catch (e) {
+      common.fail(res, e);
+   }
+});
+
 
 router.get('/usersList', auth, async (req, res) => {
    try {
       const usersList = await User.find({})
-      common.success(res, usersList)
+      const mapUser = usersList.map(user => {
+         return {
+            name: user['name'] || '',
+            email: user["email"] || '',
+            dob: user["dob"] || '',
+            phone: user["phone"] || '',
+            city: user["city"] || '',
+            pin: user["pin"] || '',
+            createdAt: user["createdAt"] || '',
+            updatedAt: user["updatedAt"] || ''
+         }
+      });
+      common.success(res,{result: mapUser} )
    } catch (e) {
       common.fail(res, e);
    }
@@ -112,7 +143,7 @@ router.patch('/users/me', auth, async (req, res) => {
          req.user[key] = req.body[key];
       });
       await req.user.save();
-      common.success(res, req.user)
+      common.success(res, {result: req.user})
    } catch (e) {
       common.fail(res, e);
    }
